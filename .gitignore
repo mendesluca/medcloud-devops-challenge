@@ -1,4 +1,4 @@
-# Node
+# Node.js
 node_modules/
 npm-debug.log*
 .env
@@ -13,6 +13,12 @@ override.tf.json
 terraform.tfvars
 .terraform.lock.hcl
 
+# Terraform plugin binaries
+**/terraform-provider-*
+
+# Backup files
+*.backup
+
 # Docker
 *.log
 *.pid
@@ -21,3 +27,6 @@ terraform.tfvars
 
 # VSCode
 .vscode/
+
+# Ignore token
+token.txt

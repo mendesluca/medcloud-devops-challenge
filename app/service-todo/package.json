@@ -1,0 +1,14 @@
+{
+  "name": "service-todo",
+  "version": "1.0.0",
+  "description": "Serviço de tarefas para teste técnico Medcloud",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "author": "Lucas Mendes",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

@@ -89,8 +89,5 @@ O projeto está modularizado, com infraestrutura automatizada e facilmente repli
 
 ## 👨‍💻 Autor
 
-Feito com 💙 por [Lucas Mendes](https://github.com/mendesluca)
+Feito por [Lucas Mendes](https://github.com/mendesluca)
 
----
-
-> Caso queira entender a fundo como tudo foi implementado, veja o arquivo [`RELATORIO.md`](./RELATORIO.md).

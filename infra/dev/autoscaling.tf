@@ -1,6 +1,6 @@
 resource "aws_appautoscaling_target" "ecs_scaling_target" {
   service_namespace  = "ecs"
-  resource_id = "service/${module.ecs_cluster.cluster_name}/todo-api-${var.environment}"
+  resource_id        = "service/cluster-${terraform.workspace}/todo-api-${terraform.workspace}"
   scalable_dimension = "ecs:service:DesiredCount"
   min_capacity       = 1
   max_capacity       = 3
@@ -9,7 +9,7 @@ resource "aws_appautoscaling_target" "ecs_scaling_target" {
 resource "aws_appautoscaling_policy" "cpu_scale_out" {
   name               = "cpu-scale-out-${terraform.workspace}"
   policy_type        = "TargetTrackingScaling"
-  resource_id        = aws_appautoscaling_target.ecs_scaling_target.resource_id 
+  resource_id        = aws_appautoscaling_target.ecs_scaling_target.resource_id
   scalable_dimension = aws_appautoscaling_target.ecs_scaling_target.scalable_dimension
   service_namespace  = aws_appautoscaling_target.ecs_scaling_target.service_namespace
 

@@ -15,7 +15,7 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "5.1.1"
 
-  name = "dev-vpc"
+  name = "vpc-${terraform.workspace}"
   cidr = "10.0.0.0/16"
 
   azs             = ["us-east-1a", "us-east-1b"]
@@ -26,60 +26,55 @@ module "vpc" {
   single_nat_gateway = true
 
   tags = {
-    Environment = "dev"
-    Project     = "aws-devops-pipeline"
+    Environment = terraform.workspace
+    Project     = var.project
   }
 }
 
 module "ecs_cluster" {
-  source      = "../modules/ecs"
-  cluster_name = "dev-cluster"
-  environment  = "dev"
-  project      = "aws-devops-pipeline"
+  source       = "../modules/ecs"
+  cluster_name = "cluster-${terraform.workspace}"
+  environment  = terraform.workspace
+  project      = var.project
 }
 
 module "ecr" {
   source          = "../modules/ecr"
-  repository_name = "todo-api"
-  environment     = "dev"
-  project         = "aws-devops-pipeline"
+  repository_name = "todo-api-${terraform.workspace}"
+  environment     = terraform.workspace
+  project         = var.project
 }
 
 module "alb" {
   source  = "../modules/alb"
-  name    = "todo-api-${var.environment}"
+  name    = "todo-api-${terraform.workspace}"
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.public_subnets
   tags = {
-    Environment = var.environment
+    Environment = terraform.workspace
     Project     = var.project
   }
 }
 
 module "artifacts_bucket" {
   source       = "../modules/s3_artifacts"
-  bucket_name  = "todo-api-artifacts-dev"
-  environment  = var.environment
+  bucket_name  = "todo-api-artifacts-${terraform.workspace}-lucas"
+  environment  = terraform.workspace
   project      = var.project
 }
 
-
 module "pipeline" {
   source                = "../modules/pipeline"
-  environment           = var.environment
+  environment           = terraform.workspace
   ecr_url               = module.ecr.repository_url
   cluster_name          = module.ecs_cluster.cluster_id
   service_name          = aws_ecs_service.todo_api.name
-    github_connection_arn = "arn:aws:codeconnections:us-east-1:975049932664:connection/e361281e-e36a-4269-9bac-5b19077ea02f"
+  github_connection_arn = "arn:aws:codestar-connections:us-east-1:975049932664:connection/e361281e-e36a-4269-9bac-5b19077ea02f"
   github_full_repo      = "mendesluca/todo-api"
   github_branch         = "main"
   github_repo_url       = "https://github.com/mendesluca/todo-api.git"
   s3_bucket             = module.artifacts_bucket.bucket_name
 }
-
-
-
-
 
 output "ecr_repository_url" {
   value = module.ecr.repository_url
@@ -89,18 +84,14 @@ output "alb_dns_name" {
   value = module.alb.alb_dns_name
 }
 
-
-
-
-# Função de execução do ECS (permite pull do ECR, logs no CloudWatch)
 resource "aws_iam_role" "ecs_task_execution" {
-  name = "ecsTaskExecutionRole-${var.environment}"
+  name = "ecsTaskExecutionRole-${terraform.workspace}"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
       Principal = {
         Service = "ecs-tasks.amazonaws.com"
       }
@@ -109,7 +100,7 @@ resource "aws_iam_role" "ecs_task_execution" {
 
   tags = {
     Project     = var.project
-    Environment = var.environment
+    Environment = terraform.workspace
   }
 }
 
@@ -118,15 +109,14 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Role da task (pode ser básica, ou usada pra acessar Secrets, S3, etc)
 resource "aws_iam_role" "ecs_task_role" {
-  name = "ecsTaskRole-${var.environment}"
+  name = "ecsTaskRole-${terraform.workspace}"
 
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
       Principal = {
         Service = "ecs-tasks.amazonaws.com"
       }
@@ -134,9 +124,8 @@ resource "aws_iam_role" "ecs_task_role" {
   })
 }
 
-# Security Group para o serviço ECS (permite tráfego na porta 3000)
 resource "aws_security_group" "ecs_sg" {
-  name        = "ecs-sg-${var.environment}"
+  name        = "ecs-sg-${terraform.workspace}"
   description = "Security group for ECS service"
   vpc_id      = module.vpc.vpc_id
 
@@ -155,13 +144,12 @@ resource "aws_security_group" "ecs_sg" {
   }
 
   tags = {
-    Name = "ecs-sg-${var.environment}"
+    Name = "ecs-sg-${terraform.workspace}"
   }
 }
 
-# ECS Task Definition
 resource "aws_ecs_task_definition" "todo_api" {
-  family                   = "todo-api-${var.environment}"
+  family                   = "todo-api-${terraform.workspace}"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "256"
   memory                   = "512"
@@ -171,31 +159,29 @@ resource "aws_ecs_task_definition" "todo_api" {
 
   container_definitions = jsonencode([
     {
-      name      = "todo-api"
-      image     = module.ecr.repository_url
-      essential = true
+      name      = "todo-api",
+      image     = module.ecr.repository_url,
+      essential = true,
       portMappings = [
         {
-          containerPort = 3000
+          containerPort = 3000,
           hostPort      = 3000
         }
       ],
       logConfiguration = {
         logDriver = "awslogs",
         options = {
-          awslogs-group         = "/ecs/todo-api-${var.environment}"
-          awslogs-region        = var.aws_region
+          awslogs-group         = "/ecs/todo-api-${terraform.workspace}",
+          awslogs-region        = var.aws_region,
           awslogs-stream-prefix = "ecs"
         }
       }
     }
   ])
-
 }
 
-# ECS Service
 resource "aws_ecs_service" "todo_api" {
-  name            = "todo-api-${var.environment}"
+  name            = "todo-api-${terraform.workspace}"
   cluster         = module.ecs_cluster.cluster_id
   task_definition = aws_ecs_task_definition.todo_api.arn
   desired_count   = 1
@@ -220,7 +206,7 @@ resource "aws_ecs_service" "todo_api" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_high" {
-  alarm_name          = "todo-api-${var.environment}-cpu-high"
+  alarm_name          = "todo-api-${terraform.workspace}-cpu-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
   metric_name         = "CPUUtilization"
@@ -236,8 +222,10 @@ resource "aws_cloudwatch_metric_alarm" "cpu_high" {
     ServiceName = aws_ecs_service.todo_api.name
   }
 
+  alarm_actions = [aws_sns_topic.alerts.arn]
+
   tags = {
-    Environment = var.environment
+    Environment = terraform.workspace
     Project     = var.project
   }
 }

@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    IMAGE_REPO_NAME: service-med
+    IMAGE_REPO_NAME: todo-api
     IMAGE_TAG: latest
   parameter-store:
     AWS_ACCOUNT_ID: "/devops/aws_account_id"

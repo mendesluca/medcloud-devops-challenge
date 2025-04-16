@@ -1,12 +1,12 @@
 {
-  "name": "service-med",
+  "name": "todo-api",
   "version": "1.0.0",
-  "description": "Microserviço de agendamento médico para o desafio da Medcloud",
+  "description": "API de gerenciamento de tarefas desenvolvida para o desafio DevOps da Medcloud",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": ["medcloud", "microservice", "devops", "nodejs", "express"],
+  "keywords": ["medcloud", "todo", "api", "devops", "nodejs", "express"],
   "author": "Lucas Wellinson Mendes Martins",
   "license": "MIT",
   "dependencies": {

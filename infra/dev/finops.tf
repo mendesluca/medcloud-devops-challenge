@@ -31,26 +31,23 @@ resource "aws_iam_role_policy" "eventbridge_ecs_policy" {
   })
 }
 
-# Regra para desligar (22h)
 resource "aws_cloudwatch_event_rule" "ecs_stop" {
   name                = "ecs-stop-${terraform.workspace}"
   schedule_expression = "cron(0 22 * * ? *)"
 }
 
-# Regra para ligar (7h)
 resource "aws_cloudwatch_event_rule" "ecs_start" {
   name                = "ecs-start-${terraform.workspace}"
   schedule_expression = "cron(0 7 * * ? *)"
 }
 
-# Target: desligar
 resource "aws_cloudwatch_event_target" "stop_target" {
   rule      = aws_cloudwatch_event_rule.ecs_stop.name
   role_arn  = aws_iam_role.eventbridge_ecs_role.arn
-  arn       = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:cluster/${module.ecs_cluster.cluster_name}"
+  arn       = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:cluster/cluster-${terraform.workspace}"
 
   ecs_target {
-    task_count       = 0
+    # task_count = 0
     launch_type      = "FARGATE"
     platform_version = "LATEST"
     network_configuration {
@@ -62,11 +59,10 @@ resource "aws_cloudwatch_event_target" "stop_target" {
   }
 }
 
-# Target: ligar
 resource "aws_cloudwatch_event_target" "start_target" {
   rule      = aws_cloudwatch_event_rule.ecs_start.name
   role_arn  = aws_iam_role.eventbridge_ecs_role.arn
-  arn       = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:cluster/${module.ecs_cluster.cluster_name}"
+  arn       = "arn:aws:ecs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:cluster/cluster-${terraform.workspace}"
 
   ecs_target {
     task_count       = 1

@@ -3,7 +3,7 @@ FROM node:18-alpine
 # Diretório de trabalho
 WORKDIR /app
 
-# Copia os arquivos de dependência e instala apenas as de produção
+# Copia apenas arquivos de dependência e instala apenas produção
 COPY package*.json ./
 RUN npm install --production
 
@@ -15,4 +15,4 @@ ENV PORT=3000
 EXPOSE $PORT
 
 # Comando para iniciar a aplicação
-CMD ["node", "index.js"]
+CMD ["npm", "start"]

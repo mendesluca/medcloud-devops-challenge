@@ -5,8 +5,10 @@ npm-debug.log*
 
 # Terraform
 .terraform/
+infra/dev/.terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
 crash.log
 override.tf
 override.tf.json
@@ -28,5 +30,5 @@ terraform.tfvars
 # VSCode
 .vscode/
 
-# Ignore token
+# Tokens
 token.txt
